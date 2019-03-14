@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.icu.util.Measure;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -136,6 +137,9 @@ public class Slider extends View {
 
         mBarPaint.setStrokeWidth(mBarWidth);
         mValueBarPaint.setStrokeWidth(mBarWidth);
+
+        setMinimumWidth((int) dpToPixel(DEFAULT_BAR_WIDTH+getPaddingLeft()+getPaddingRight()+DEFAULT_CURSOR_DIAMETER));
+        setMinimumHeight((int) dpToPixel(DEFAULT_BAR_LENGTH+getPaddingTop()+getPaddingBottom()+DEFAULT_CURSOR_DIAMETER));
     }
 
     /**
@@ -150,16 +154,40 @@ public class Slider extends View {
 
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+
+        int suggestedWidth, suggestedHeigth;
+        int width, height;
+
+        suggestedWidth = Math.max( getSuggestedMinimumWidth(), (int) Math.max(mBarWidth,mCursorDiameter) + getPaddingLeft() );
+        suggestedHeigth = Math.max( getSuggestedMinimumHeight(), (int) Math.max(mBarLength,mCursorDiameter) + getPaddingTop() );
+
+        width= resolveSize(suggestedWidth,suggestedHeigth);
+        height=resolveSize(suggestedHeigth,suggestedWidth);
+
+        setMeasuredDimension(width,height);
+    }
+
+    @Override
     protected void onDraw(Canvas canvas){
         super.onDraw(canvas);
-        canvas.drawLine(( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(mMin) - getPaddingBottom(),
+        Point p1, p2;
+
+        p1 = toPos(mMin);
+        p2 = toPos(mMax);
+
+        canvas.drawLine(p1.x, p1.y, p2.x, p2.y, mBarPaint);
+
+        /*canvas.drawLine(( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(mMin) - getPaddingBottom(),
                 ( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(DEFAULT_BAR_LENGTH) - getPaddingTop(),
                 mBarPaint);
         canvas.drawCircle(getWidth() / 2, getHeight() - dpToPixel(mValue) + getPaddingBottom(),
                 dpToPixel(DEFAULT_CURSOR_DIAMETER), mCursorPaint);
         canvas.drawLine(( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(mMin) + getPaddingBottom(),
                 ( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(mValue)  - getPaddingTop(),
-                mValueBarPaint);
+                mValueBarPaint);*/
     }
 
 }
