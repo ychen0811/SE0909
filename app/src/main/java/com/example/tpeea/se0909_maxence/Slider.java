@@ -1,13 +1,14 @@
 package com.example.tpeea.se0909_maxence;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.icu.util.Measure;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
@@ -52,8 +53,11 @@ public class Slider extends View {
     private int mBarColor;
     private int mValueBarColor;
 
-    // Listener
+    // Listener et actions du slider
     private SliderChangeListener mListener;
+
+    // Attributs du layout
+    private AttributeSet mAttributeSet;
 
     // Méthodes
     // Privées
@@ -147,6 +151,29 @@ public class Slider extends View {
         // Définit la taille minimale voulue
         setMinimumWidth( (int) dpToPixel(DEFAULT_BAR_WIDTH+DEFAULT_CURSOR_DIAMETER) +getPaddingLeft()+getPaddingRight() );
         setMinimumHeight( (int) dpToPixel(DEFAULT_BAR_LENGTH+DEFAULT_CURSOR_DIAMETER) +getPaddingTop()+getPaddingBottom() );
+
+        // Récupère les attributs du layout
+        if (mAttributeSet != null) {
+            TypedArray attr = context.obtainStyledAttributes(mAttributeSet,
+                    R.styleable.Slider, 0, 0);
+
+            mBarLength = attr.getDimension(R.styleable.Slider_barLength, mBarLength);
+            mBarWidth = attr.getDimension(R.styleable.Slider_barWidth, mBarWidth);
+            mCursorDiameter = attr.getDimension(R.styleable.Slider_cursorDiameter, mCursorDiameter);
+
+            mEnabled = !attr.getBoolean( (R.styleable.Slider_disabled), !mEnabled);
+
+            mBarColor = attr.getColor(R.styleable.Slider_barColor, mBarColor);
+            mCursorColor = attr.getColor(R.styleable.Slider_cursorColor, mCursorColor);
+            mValueBarColor = attr.getColor(R.styleable.Slider_valueBarColor, mValueBarColor);
+            mDisabledColor = attr.getColor(R.styleable.Slider_disabledColor, mDisabledColor);
+
+            mMin = attr.getFloat(R.styleable.Slider_min, mMin);
+            mMax = attr.getFloat(R.styleable.Slider_max, mMax);
+            mValue = attr.getFloat(R.styleable.Slider_value, mValue);
+
+            attr.recycle();
+        }
     }
 
     /**
@@ -197,15 +224,56 @@ public class Slider extends View {
         canvas.drawCircle(p3.x, p3.y, mCursorDiameter/2, mCursorPaint);
     }
 
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        return new SavedState(super.onSaveInstanceState(), mValue);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        if (!(state instanceof SavedState)){
+            super.onRestoreInstanceState(state);
+            return;
+        }
+        mValue = ((SavedState) state).sliderValue;
+        super.onRestoreInstanceState(((SavedState) state).getSuperState());
+    }
+
     // Publiques
+
+    static class SavedState extends BaseSavedState {
+        private float sliderValue;
+
+        public static final Parcelable.Creator<SavedState> CREATOR = new Parcelable.Creator<SavedState>() {
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
+
+        private SavedState(Parcel source) {
+            super(source);
+            sliderValue = source.readFloat();
+        }
+
+        public SavedState(Parcelable superState, float value) {
+            super(superState); sliderValue = value;
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags){
+            super.writeToParcel(out, flags);
+            out.writeFloat(sliderValue);
+        }
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event){
-        boolean flag = false;
+        boolean flag;
         switch (event.getAction()){
-            case MotionEvent.ACTION_UP:
-                flag = true;
-                break;
             case MotionEvent.ACTION_DOWN:
                 flag = true;
                 updateSlider(event);
@@ -229,5 +297,9 @@ public class Slider extends View {
 
     public void setListener(SliderChangeListener listener){
         mListener = listener;
+    }
+
+    public float getValue() {
+        return mValue;
     }
 }
