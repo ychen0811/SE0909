@@ -143,13 +143,12 @@ public class Slider extends View {
         mBarPaint.setStrokeWidth(mBarWidth);
         mValueBarPaint.setStrokeWidth(mBarWidth);
 
+        //
         setMinimumWidth( (int) dpToPixel(DEFAULT_BAR_WIDTH+DEFAULT_CURSOR_DIAMETER) +getPaddingLeft()+getPaddingRight() );
         setMinimumHeight( (int) dpToPixel(DEFAULT_BAR_LENGTH+DEFAULT_CURSOR_DIAMETER) +getPaddingTop()+getPaddingBottom() );
 
-        Log.i("Debbuging log", "Padding top : " + getPaddingTop());
-        Log.i("Debbuging log", "Padding bottom : " + getPaddingBottom());
-        Log.i("Debbuging log", "Padding right : " + getPaddingRight());
-        Log.i("Debbuging log", "Padding left : " + getPaddingLeft());
+        // Définit le listener
+        mListener.onChange(mValue);
     }
 
     /**
@@ -162,7 +161,7 @@ public class Slider extends View {
     }
 
     private void updateSlider(MotionEvent event){
-        Point p = new Point((int) event.getRawX(),(int) event.getRawY());
+        Point p = new Point((int) event.getX(),(int) event.getY());
         mValue = toValue(p);
         invalidate();
     }
@@ -199,21 +198,30 @@ public class Slider extends View {
         canvas.drawCircle(p3.x, p3.y, mCursorDiameter/2, mCursorPaint);
         canvas.drawLine(p1.x, p1.y, p3.x, p3.y, mValueBarPaint);
 
-
+/*
         Log.i("Debugging log", "Padding top : " + getPaddingTop());
         Log.i("Debugging log", "Padding bottom : " + getPaddingBottom());
         Log.i("Debugging log", "Padding right : " + getPaddingRight());
         Log.i("Debugging log", "Padding left : " + getPaddingLeft());
         Log.i("Debugging log", "Minimum Width suggested : " + getSuggestedMinimumWidth());
-        Log.i("Debugging log", "Minimum Height suggested : " + getSuggestedMinimumHeight());
+        Log.i("Debugging log", "Minimum Height suggested : " + getSuggestedMinimumHeight());*/
     }
 
     // Publiques
 
     @Override
     public boolean onTouchEvent(MotionEvent event){
-        super.onTouchEvent(event);
-        return false;
+        switch (event.getAction()){
+            case MotionEvent.ACTION_BUTTON_PRESS:
+                break;
+            case MotionEvent.ACTION_MOVE:
+                updateSlider(event);
+                mListener.onChange(mValue);
+                break;
+            default:
+                break;
+        }
+        return super.onTouchEvent(event);
     }
 
     public interface SliderChangeListener{

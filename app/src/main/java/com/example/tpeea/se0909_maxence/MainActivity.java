@@ -7,11 +7,13 @@ public class MainActivity extends AppCompatActivity implements Slider.SliderChan
 
     private Slider slider;
 
+    private float value;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         slider.setListener(this);
-        //onChange();
+        onChange(value);
         setContentView(R.layout.activity_main);
     }
 }
