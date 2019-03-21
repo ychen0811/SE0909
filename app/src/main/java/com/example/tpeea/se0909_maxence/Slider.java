@@ -120,10 +120,11 @@ public class Slider extends View {
 
         // Dessine les éléments graphiques
         mCursorPaint.setStyle(Paint.Style.FILL_AND_STROKE);
-        mBarPaint.setStyle(Paint.Style.STROKE);
-        mValueBarPaint.setStyle(Paint.Style.STROKE);
+        mBarPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        mValueBarPaint.setStyle(Paint.Style.FILL);
 
         mBarPaint.setStrokeCap(Paint.Cap.ROUND);
+        mValueBarPaint.setStrokeCap(Paint.Cap.ROUND);
 
         mDisabledColor = ContextCompat.getColor(context, R.color.colorDisabled); // référence de la couleur à "app/res/values/color.xml"
         mCursorColor = ContextCompat.getColor(context, R.color.colorAccent);
@@ -143,12 +144,9 @@ public class Slider extends View {
         mBarPaint.setStrokeWidth(mBarWidth);
         mValueBarPaint.setStrokeWidth(mBarWidth);
 
-        //
+        // Définit la taille minimale voulue
         setMinimumWidth( (int) dpToPixel(DEFAULT_BAR_WIDTH+DEFAULT_CURSOR_DIAMETER) +getPaddingLeft()+getPaddingRight() );
         setMinimumHeight( (int) dpToPixel(DEFAULT_BAR_LENGTH+DEFAULT_CURSOR_DIAMETER) +getPaddingTop()+getPaddingBottom() );
-
-        // Définit le listener
-        mListener.onChange(mValue);
     }
 
     /**
@@ -162,7 +160,7 @@ public class Slider extends View {
 
     private void updateSlider(MotionEvent event){
         Point p = new Point((int) event.getX(),(int) event.getY());
-        mValue = toValue(p);
+        mValue = ( toValue(p) <= mMin ? mMin : ( toValue(p) >=  mMax ? mMax : toValue(p)) );
         invalidate();
     }
 
@@ -195,40 +193,42 @@ public class Slider extends View {
         p3 = toPos(mValue);
 
         canvas.drawLine(p1.x, p1.y, p2.x, p2.y, mBarPaint);
-        canvas.drawCircle(p3.x, p3.y, mCursorDiameter/2, mCursorPaint);
         canvas.drawLine(p1.x, p1.y, p3.x, p3.y, mValueBarPaint);
-
-/*
-        Log.i("Debugging log", "Padding top : " + getPaddingTop());
-        Log.i("Debugging log", "Padding bottom : " + getPaddingBottom());
-        Log.i("Debugging log", "Padding right : " + getPaddingRight());
-        Log.i("Debugging log", "Padding left : " + getPaddingLeft());
-        Log.i("Debugging log", "Minimum Width suggested : " + getSuggestedMinimumWidth());
-        Log.i("Debugging log", "Minimum Height suggested : " + getSuggestedMinimumHeight());*/
+        canvas.drawCircle(p3.x, p3.y, mCursorDiameter/2, mCursorPaint);
     }
 
     // Publiques
 
     @Override
     public boolean onTouchEvent(MotionEvent event){
+        boolean flag = false;
         switch (event.getAction()){
-            case MotionEvent.ACTION_BUTTON_PRESS:
+            case MotionEvent.ACTION_UP:
+                flag = true;
+                break;
+            case MotionEvent.ACTION_DOWN:
+                flag = true;
+                updateSlider(event);
+                mListener.onChange(mValue);
                 break;
             case MotionEvent.ACTION_MOVE:
+                flag = true;
                 updateSlider(event);
                 mListener.onChange(mValue);
                 break;
             default:
+                flag = true;
                 break;
         }
-        return super.onTouchEvent(event);
+        return flag;
     }
 
     public interface SliderChangeListener{
         void onChange(float value);
     }
 
+
     public void setListener(SliderChangeListener listener){
-        mListener=listener;
+        mListener = listener;
     }
 }
