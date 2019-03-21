@@ -7,7 +7,9 @@ import android.graphics.Point;
 import android.icu.util.Measure;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
+import android.view.MotionEvent;
 import android.view.View;
 
 public class Slider extends View {
@@ -50,6 +52,9 @@ public class Slider extends View {
     private int mBarColor;
     private int mValueBarColor;
 
+    // Listener
+    private SliderChangeListener mListener;
+
     // Méthodes
     // Privées
 
@@ -78,7 +83,7 @@ public class Slider extends View {
      */
     private Point toPos (float value){
         int x, y;
-        x = (int) Math.max(mCursorDiameter, mBarWidth)/2 + getPaddingLeft();
+        x = (int)  ( Math.max(mCursorDiameter, mBarWidth)/2 + getPaddingLeft() );
         y = (int) ( (1 - valueToRatio(value)) * mBarLength + mCursorDiameter / 2 + getPaddingTop() );
         return new Point(x,y);
     }
@@ -138,8 +143,13 @@ public class Slider extends View {
         mBarPaint.setStrokeWidth(mBarWidth);
         mValueBarPaint.setStrokeWidth(mBarWidth);
 
-        setMinimumWidth((int) dpToPixel(DEFAULT_BAR_WIDTH+getPaddingLeft()+getPaddingRight()+DEFAULT_CURSOR_DIAMETER));
-        setMinimumHeight((int) dpToPixel(DEFAULT_BAR_LENGTH+getPaddingTop()+getPaddingBottom()+DEFAULT_CURSOR_DIAMETER));
+        setMinimumWidth( (int) dpToPixel(DEFAULT_BAR_WIDTH+DEFAULT_CURSOR_DIAMETER) +getPaddingLeft()+getPaddingRight() );
+        setMinimumHeight( (int) dpToPixel(DEFAULT_BAR_LENGTH+DEFAULT_CURSOR_DIAMETER) +getPaddingTop()+getPaddingBottom() );
+
+        Log.i("Debbuging log", "Padding top : " + getPaddingTop());
+        Log.i("Debbuging log", "Padding bottom : " + getPaddingBottom());
+        Log.i("Debbuging log", "Padding right : " + getPaddingRight());
+        Log.i("Debbuging log", "Padding left : " + getPaddingLeft());
     }
 
     /**
@@ -150,8 +160,14 @@ public class Slider extends View {
     private float dpToPixel(float valueInDp){
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, getResources().getDisplayMetrics());
     }
-    // Publiques
 
+    private void updateSlider(MotionEvent event){
+        Point p = new Point((int) event.getRawX(),(int) event.getRawY());
+        mValue = toValue(p);
+        invalidate();
+    }
+
+    // Protégées
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
@@ -173,21 +189,38 @@ public class Slider extends View {
     @Override
     protected void onDraw(Canvas canvas){
         super.onDraw(canvas);
-        Point p1, p2;
+        Point p1, p2, p3;
 
         p1 = toPos(mMin);
         p2 = toPos(mMax);
+        p3 = toPos(mValue);
 
         canvas.drawLine(p1.x, p1.y, p2.x, p2.y, mBarPaint);
+        canvas.drawCircle(p3.x, p3.y, mCursorDiameter/2, mCursorPaint);
+        canvas.drawLine(p1.x, p1.y, p3.x, p3.y, mValueBarPaint);
 
-        /*canvas.drawLine(( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(mMin) - getPaddingBottom(),
-                ( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(DEFAULT_BAR_LENGTH) - getPaddingTop(),
-                mBarPaint);
-        canvas.drawCircle(getWidth() / 2, getHeight() - dpToPixel(mValue) + getPaddingBottom(),
-                dpToPixel(DEFAULT_CURSOR_DIAMETER), mCursorPaint);
-        canvas.drawLine(( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(mMin) + getPaddingBottom(),
-                ( getWidth() - dpToPixel(DEFAULT_BAR_WIDTH) ) / 2, getHeight() - dpToPixel(mValue)  - getPaddingTop(),
-                mValueBarPaint);*/
+
+        Log.i("Debugging log", "Padding top : " + getPaddingTop());
+        Log.i("Debugging log", "Padding bottom : " + getPaddingBottom());
+        Log.i("Debugging log", "Padding right : " + getPaddingRight());
+        Log.i("Debugging log", "Padding left : " + getPaddingLeft());
+        Log.i("Debugging log", "Minimum Width suggested : " + getSuggestedMinimumWidth());
+        Log.i("Debugging log", "Minimum Height suggested : " + getSuggestedMinimumHeight());
     }
 
+    // Publiques
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        super.onTouchEvent(event);
+        return false;
+    }
+
+    public interface SliderChangeListener{
+        void onChange(float value);
+    }
+
+    public void setListener(SliderChangeListener listener){
+        mListener=listener;
+    }
 }
