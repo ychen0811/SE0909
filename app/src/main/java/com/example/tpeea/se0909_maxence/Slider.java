@@ -227,7 +227,6 @@ public class Slider extends View {
         void onChange(float value);
     }
 
-
     public void setListener(SliderChangeListener listener){
         mListener = listener;
     }
